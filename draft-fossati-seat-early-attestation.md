@@ -24,7 +24,12 @@ pi:
   docmapping: yes
 
 venue:
-  github: yaronf/draft-tls-attestation
+  group: "SEAT"
+  type: "Working Group"
+  mail: "seat@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/seat/"
+  github: "yaronf/draft-fossati-seat-early-attestation"
+  latest: "https://yaronf.github.io/draft-fossati-seat-early-attestation/draft-fossati-seat-early-attestation.html"
 
 author:
  -
@@ -76,6 +81,7 @@ normative:
 informative:
   RFC6960: ocsp
   RFC9334: rats-arch
+  I-D.fossati-tls-attestation: old-draft
   I-D.ietf-rats-eat: rats-eat
   I-D.ietf-rats-daa: rats-daa
   I-D.ietf-oauth-selective-disclosure-jwt: sd-jwt
@@ -154,20 +160,17 @@ These extensions have been designed to allow the peers to use any attestation te
 
 #  Introduction
 
-Attestation {{-rats-arch}} is the process by which an entity produces Evidence about itself that another party can use to evaluate the trustworthiness of that entity.
+Attestation {{-rats-arch}} is the process by which an entity produces evidence about itself that another party can use to evaluate the trustworthiness of that entity.
 This document describes a series of protocol extensions to the TLS 1.3 handshake that enables the binding of the TLS authentication key to a remote attestation session.
-As a result, a peer can use "attestation credentials", consisting of compound platform Evidence and key attestation, to authenticate itself to its peer during the setup of the TLS channel.
 This enables an attester, such as a confidential workload running in a Trusted Execution Environment (TEE) {{-teep-arch}}, or an IoT device that is trying to authenticate itself to a network access point, to present a more comprehensive set of security metrics to its peer.
 This, in turn, allows for the implementation of authorization policies at the relying parties that are based on stronger security signals.
 
 Given the variety of deployed and emerging attestation technologies (e.g., {{TPM1.2}}, {{TPM2.0}}, {{-rats-eat}}) these extensions have been explicitly designed to be agnostic of the attestation formats.
 This is achieved by reusing the generic encapsulation defined in {{-cmw}} for transporting Evidence and Attestation Result payloads in the TLS Attestation handshake message.
 
-This specification provides both one-way (server-only) and mutual (client and server) authentication using attestation credentials, and allows the attestation topologies at each peer to be independent of each other.
+This specification provides both one-way (server-only) and mutual (client and server) authentication using traditional TLS authentication combined with attestation, and allows the attestation topologies at each peer to be independent of each other.
 The proposed design supports both background-check and passport topologies, as described in {{Sections 5.2 and 5.1 of -rats-arch}}.
 This is detailed in {{evidence-extensions}} and {{attestation-results-extensions}}.
-
-The design combines normal X.509 certificate authentication with platform attestation. If attestation-only authentication is desired, implementations SHOULD use self-signed X.509 certificates.
 
 This document does not mandate any particular attestation technology.
 Companion documents are expected to define specific attestation mechanisms.
@@ -194,9 +197,6 @@ TIK-C-ID, TIK-S-ID:
 : An identifier for TIK-C or respectively, TIK-S. This may be a fingerprint
 (cryptographic hash) of the public key, but other implementations are possible.
 
-The term "remote attestation credentials", or "attestation credentials", is used
-to refer to both attestation Evidence and Attestation Results, when no
-distinction needs to be made between them.
 
 {::boilerplate bcp14-tagged}
 
@@ -216,7 +216,7 @@ The protocol combines platform attestation with X.509 certificate authentication
 
 Attestation when used alone is vulnerable to identity spoofing attacks, in particular when zero-day attacks exist for a class of hardware. (TODO: reference). Therefore it needs to be combined with traditional authentication, which in the case of TLS takes the form of CA-signed certificates.
 
-We RECOMMEND that regular applications use the combined mode, which provides the full security guarantees of an authenticated TLS handshake (for the peer/peers being authenticated) as
+We RECOMMEND that regular applications use authentication and attestation in tandem, to gain the full security guarantees of an authenticated TLS handshake (for the peer/peers being authenticated) as
 well as guarantees of platform integrity.
 
 If attestation-only authentication is desired (e.g., for specialized use cases including initial
@@ -227,8 +227,8 @@ such as hardware-enforced time limitations, or use of platform-level APIs in the
 
 As typical with new features in TLS, the client indicates support for the new
 extension in the ClientHello message. The newly introduced extensions allow
-remote attestation credentials and nonces to be exchanged. The nonces are used
-for guaranteeing freshness of the exchanged Evidence when the background check
+attestation Evidence or Attestation Results to be exchanged. TLS nonces are used
+to guarantee freshness of the exchanged Evidence when the background check
 model is in use. Nonces are not used in the passport model, because the expectation
 of freshness is more relaxed and is only governed by the lifetime of the signed
 Attestation Results.
@@ -320,7 +320,7 @@ AttestationResults within the CMW MUST include:
 This binding ensures that the attested key is the one used in the TLS handshake
 and provides freshness guarantees through the nonces.
 
-# Use of Remote Attestation Credentials in the TLS Handshake
+# Use of Attestation in the TLS Handshake
 
 For both the passport model (described in section 5.1 of {{RFC9334}}) and
 background check model (described in Section 5.2 of {{RFC9334}}) the following
@@ -542,7 +542,16 @@ The decision to initiate reattestation is per local policy and may be based on
 factors such as elapsed time since the last attestation, changes in platform
 state, or security policy requirements.
 
-# Evidence Extensions (Background Check Model) {#evidence-extensions}
+# Negotiating This Protocol {#negotiating-protocol}
+
+This section defines the TLS extensions used to negotiate the use of attestation
+in the TLS handshake. Two models are supported: the Background Check model, where
+Evidence is exchanged and verified during the handshake, and the Passport model,
+where pre-verified Attestation Results are presented. The extensions defined
+here allow peers to indicate their support for attestation and negotiate which
+attestation format and verifier to use.
+
+## Evidence Extensions (Background Check Model) {#evidence-extensions}
 
 The EvidenceType structure contains an indicator for the type of Evidence
 expected in the `Attestation` handshake message. The Evidence contained in
@@ -590,7 +599,7 @@ the CMW payload is sent in the `Attestation` handshake message (see {{attestatio
 Values for media_type are defined in {{iana-media-types}}.
 Values for content_format are defined in {{iana-content-formats}}.
 
-# Attestation Results Extensions (Passport Model) {#attestation-results-extensions}
+## Attestation Results Extensions (Passport Model) {#attestation-results-extensions}
 
 ~~~~
     struct {
@@ -924,7 +933,7 @@ registry {{TLS-Ext-Registry}}, as follows:
 
 Initial version of draft-fossati-seat-early-attestation.
 
-This version represents a major architectural change from draft-fossati-tls-attestation.
+This version represents a major architectural change from {{-old-draft}}.
 The key changes include:
 
 - Removed certificate extension mechanism for conveying attestation Evidence

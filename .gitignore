@@ -4,9 +4,6 @@
 *.xml
 *.v2v3.xml
 
-# Build dependencies
-lib/
-
 # Editor and IDE files
 .DS_Store
 *.swp
