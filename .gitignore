@@ -1,0 +1,18 @@
+# Built files (generated from .md source)
+*.html
+*.txt
+*.xml
+*.v2v3.xml
+
+# Editor and IDE files
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
