@@ -1,73 +1,31 @@
-# Overview
+<!-- regenerate: on (set to off if you edit this file) -->
 
-This is the source repo for the Attestation in TLS/DTLS Internet Draft (draft-fossati-seat-early-attestation).
+# TODO - Your title
 
-The published version is available on the [Datatracker](https://datatracker.ietf.org/doc/draft-fossati-seat-early-attestation/).
+This is the working area for the individual Internet-Draft, "TODO - Your title".
 
-The latest editor's draft is [here](https://tls-attestation.github.io/draft-tls-attestation/draft-fossati-seat-early-attestation.html).
+* [Editor's Copy](https://yaronf.github.io/draft-fossati-seat-early-attestation/#go.draft-fossati-seat-early-attestation.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-fossati-seat-early-attestation)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-fossati-seat-early-attestation)
+* [Compare Editor's Copy to Individual Draft](https://yaronf.github.io/draft-fossati-seat-early-attestation/#go.draft-fossati-seat-early-attestation.diff)
 
-# Instructions
 
-## Prerequisites
+## Contributing
 
-### kdrfc
+See the
+[guidelines for contributions](https://github.com/yaronf/draft-fossati-seat-early-attestation/blob/main/CONTRIBUTING.md).
 
-To install (needs a working ruby environment):
+The contributing file also has tips on how to make contributions, if you
+don't already know how to do that.
 
-```shell
-gem install kramdown-rfc
+## Command Line Usage
+
+Formatted text and HTML versions of the draft can be built using `make`.
+
+```sh
+$ make
 ```
 
-Add a `sudo` and a space in front of that command if you don't have all the
-permissions needed.
+Command line usage requires that you have the necessary software installed.  See
+[the instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/SETUP.md).
 
-### xml2rfc
-
-To install (needs a working python environment):
-
-```shell
-pip install xml2rfc
-```
-
-### idnits
-
-```
-curl -O https://raw.githubusercontent.com/ietf-tools/idnits/main/idnits
-chmod +x idnits
-mv idnits <somewhere in your PATH>
-```
-
-### aasvg
-```shell
-npm install -g aasvg
-```
-
-## Build
-
-To build the rendered I-D in HTML, TXT and XML formats:
-
-```shell
-make
-```
-
-To get rid of the produced files:
-
-```shell
-make clean
-```
-
-## Submit
-
-To submit the I-D to the IETF datatracker:
-
-* update `docname` in the markdown file to the intended version
-* [build](#build)
-* change the name of the produced XML file to reflect the intended version
-* [post](https://datatracker.ietf.org/submit/) the XML file and follow further
-  instructions coming through your email
-
-## Resources
-
-* [Internet-Draft authors resource site](https://authors.ietf.org)
-* [Kramdown-RFC (sparse) documentation](https://github.com/cabo/kramdown-rfc#readme)
-* [XML2RFC v3 Vocabulary](https://datatracker.ietf.org/doc/html/rfc7991)
