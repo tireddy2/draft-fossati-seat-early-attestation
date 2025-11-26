@@ -1,5 +1,15 @@
-ID := draft-fossati-seat-early-attestation
+LIBDIR := lib
+include $(LIBDIR)/main.mk
 
-$(ID).xml $(ID).txt $(ID).html: $(ID).md ; kdrfc --html --idnits $<
-
-clean: ; $(RM) $(ID).xml $(ID).v2v3.xml $(ID).txt $(ID).html
+$(LIBDIR)/main.mk:
+ifneq (,$(shell grep "path *= *$(LIBDIR)" .gitmodules 2>/dev/null))
+	git submodule sync
+	git submodule update --init
+else
+ifneq (,$(wildcard $(ID_TEMPLATE_HOME)))
+	ln -s "$(ID_TEMPLATE_HOME)" $(LIBDIR)
+else
+	git clone -q --depth 10 -b main \
+	    https://github.com/martinthomson/i-d-template $(LIBDIR)
+endif
+endif
