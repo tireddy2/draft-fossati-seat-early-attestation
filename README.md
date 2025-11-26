@@ -1,8 +1,8 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# TODO - Your title
+# Using Attestation in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)
 
-This is the working area for the individual Internet-Draft, "TODO - Your title".
+This is the working area for the individual Internet-Draft, "Using Attestation in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)".
 
 * [Editor's Copy](https://yaronf.github.io/draft-fossati-seat-early-attestation/#go.draft-fossati-seat-early-attestation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-fossati-seat-early-attestation)
