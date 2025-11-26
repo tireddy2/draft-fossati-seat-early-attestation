@@ -1,7 +1,7 @@
 ---
 title: Using Attestation in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)
 abbrev: Attestation in TLS/DTLS
-docname: draft-fossati-seat-early-attestation-00
+docname: draft-fossati-seat-early-attestation-latest
 submissiontype: IETF
 category: std
 
@@ -191,7 +191,7 @@ TIK-C, TIK-S:
 
 TIK-C-ID, TIK-S-ID:
 
-: An identifier for TIK-C or respectively, TIK-S. This may be a fingerprint 
+: An identifier for TIK-C or respectively, TIK-S. This may be a fingerprint
 (cryptographic hash) of the public key, but other implementations are possible.
 
 The term "remote attestation credentials", or "attestation credentials", is used
@@ -326,9 +326,9 @@ For both the passport model (described in section 5.1 of {{RFC9334}}) and
 background check model (described in Section 5.2 of {{RFC9334}}) the following
 modes of operation are allowed when used with TLS, namely:
 
-- TLS client is the attester, 
+- TLS client is the attester,
 - TLS server is the attester, and
-- TLS client and server mutually attest towards each other. 
+- TLS client and server mutually attest towards each other.
 
 We will show the message exchanges of the first two cases in sub-sections below.
 Mutual authentication via attestation combines these two (non-interfering)
@@ -347,7 +347,7 @@ The attestation Evidence or Attestation Results are conveyed in an `Attestation`
 handshake message (see {{attestation-message-section}}), which carries a CMW
 payload as defined in {{-cmw}}.
 
-## TLS Client Authenticating Using Evidence 
+## TLS Client Authenticating Using Evidence
 
 In this use case, the TLS server (acting as a relying party) challenges the TLS
 client (as the attester) to provide Evidence. The TLS server needs to provide a
@@ -357,8 +357,8 @@ client sends the Evidence in an `Attestation` handshake message after the
 `Certificate` message. The TLS server, when receiving the Evidence, will have
 to contact the verifier (which is not shown in the diagram).
 
-An example of this flow can be found in device onboarding where the 
-client initiates the communication with cloud infrastructure to 
+An example of this flow can be found in device onboarding where the
+client initiates the communication with cloud infrastructure to
 get credentials, firmware and other configuration data provisioned
 to the device. For the server to consider the device genuine it needs
 to present Evidence.
@@ -377,7 +377,7 @@ Exch | + evidence_proposal
                                         {EncryptedExtensions}  ^  Server
                                           + evidence_proposal  |  Params
                                                       (nonce)  |
-                                         {CertificateRequest}  v  
+                                         {CertificateRequest}  v
                                                {Certificate}  ^
                                          {Attestation}        |
                                          {CertificateVerify}  | Auth
@@ -394,16 +394,16 @@ Auth | {Attestation}
 
 ## TLS Server Authenticating Using Evidence
 
-In this use case the TLS client challenges the TLS server to present Evidence. 
+In this use case the TLS client challenges the TLS server to present Evidence.
 The TLS server acts as an attester while the TLS client is the relying party.
 The server sends the Evidence in an `Attestation` handshake message after the
 `EncryptedExtensions` message. The TLS client, when receiving the Evidence,
 will have to contact the verifier (which is not shown in the diagram).
 
-An example of this flow can be found in confidential computing where 
-a compute workload is only submitted to the server infrastructure 
+An example of this flow can be found in confidential computing where
+a compute workload is only submitted to the server infrastructure
 once the client/user is assured that the confidential computing platform is
-genuine. 
+genuine.
 
 ~~~~
        Client                                           Server
@@ -420,7 +420,7 @@ Exch | + evidence_request
                                         {EncryptedExtensions}  ^  Server
                                           + evidence_request   |  Params
                                          {Attestation}         |
-                                         {CertificateRequest}  v  
+                                         {CertificateRequest}  v
                                                {Certificate}  ^
                                          {CertificateVerify}  | Auth
                                                    {Finished}  v
@@ -432,7 +432,7 @@ Auth | {CertificateVerify}
 ~~~~
 {: #figure-background-check-model2 title="TLS Server Providing Evidence to TLS Client."}
 
-## TLS Client Authenticating Using Attestation Results 
+## TLS Client Authenticating Using Attestation Results
 
 In this use case the TLS client, as the attester, provides Attestation Results
 to the TLS server. The TLS client is the attester and the TLS server acts as
@@ -454,7 +454,7 @@ Exch | + results_proposal
                                                                v
                                         {EncryptedExtensions}  ^  Server
                                            + results_proposal  |  Params
-                                         {CertificateRequest}  v  
+                                         {CertificateRequest}  v
                                                {Certificate}  ^
                                          {Attestation}         |
                                          {CertificateVerify}  | Auth
@@ -492,7 +492,7 @@ Exch | + results_request
                                         {EncryptedExtensions}  ^  Server
                                            + results_request   |  Params
                                          {Attestation}         |
-                                         {CertificateRequest}  v  
+                                         {CertificateRequest}  v
                                                {Certificate}  ^
                                          {CertificateVerify}  | Auth
                                                    {Finished}  v
@@ -596,12 +596,12 @@ Values for content_format are defined in {{iana-content-formats}}.
     struct {
         opaque verifier_identity<0..2^16-1>;
     } VerifierIdentityType;
-      
+
     struct {
         select(Handshake.msg_type) {
             case client_hello:
                 VerifierIdentityType trusted_verifiers<1..2^8-1>;
-                 
+
             case server_hello:
             case encrypted_extensions:
                 VerifierIdentityType selected_verifier;
@@ -671,8 +671,8 @@ Auth | {Attestation*}
 
 ### Client Hello
 
-To indicate the support for passing Evidence in TLS following the 
-background check model, clients include the evidence_proposal 
+To indicate the support for passing Evidence in TLS following the
+background check model, clients include the evidence_proposal
 and/or the evidence_request extensions in the ClientHello.
 
 The evidence_proposal extension in the ClientHello message indicates
@@ -680,7 +680,7 @@ the Evidence types the client is able to provide to the server,
 when requested using a CertificateRequest message.
 
 The evidence_request extension in the ClientHello message indicates
-the Evidence types the client challenges the server to 
+the Evidence types the client challenges the server to
 provide in a subsequent Certificate payload.
 
 The evidence_proposal and evidence_request extensions sent in
@@ -688,19 +688,19 @@ the ClientHello each carry a list of supported Evidence types,
 sorted by preference.  When the client supports only one Evidence
 type, it is a list containing a single element.
 
-The client MUST omit Evidence types from the evidence_proposal 
+The client MUST omit Evidence types from the evidence_proposal
 extension in the ClientHello if it cannot respond to a request
-from the server to present a proposed Evidence type, or if 
-the client is not configured to use the proposed Evidence type 
-with the given server.  If the client has no Evidence types 
+from the server to present a proposed Evidence type, or if
+the client is not configured to use the proposed Evidence type
+with the given server.  If the client has no Evidence types
 to send in the ClientHello it MUST omit the evidence_proposal
 extension in the ClientHello.
 
 The client MUST omit Evidence types from the evidence_request
-extension in the ClientHello if it is not able to pass the 
-indicated verification type to a verifier.  If the client does 
+extension in the ClientHello if it is not able to pass the
+indicated verification type to a verifier.  If the client does
 not act as a relying party with regards to Evidence processing
-(as defined in the RATS architecture) then the client MUST 
+(as defined in the RATS architecture) then the client MUST
 omit the evidence_request extension from the ClientHello.
 
 ### Server Hello
@@ -739,7 +739,7 @@ selected from one of the values provided in the evidence_proposal extension
 sent in the ClientHello.  The server MUST also send a CertificateRequest
 message.
 
-If the server does not send a CertificateRequest message or none 
+If the server does not send a CertificateRequest message or none
 of the Evidence types supported by the client (as indicated in the
 evidence_proposal extension in the ClientHello) match the
 server-supported Evidence types, then the evidence_proposal
@@ -747,16 +747,16 @@ extension in the ServerHello MUST be omitted.
 
 The evidence_request extension in the ClientHello indicates what
 types of Evidence the client can challenge the server to return
-in an `Attestation` handshake message. With the evidence_request 
-extension in the EncryptedExtensions, the server indicates the 
+in an `Attestation` handshake message. With the evidence_request
+extension in the EncryptedExtensions, the server indicates the
 Evidence type carried in the `Attestation` handshake message sent
 after the EncryptedExtensions by the server. The Evidence
 contained in the CMW payload MUST include both the client nonce
 (from the ClientHello extension) and the server nonce (from the
 ServerHello extension) in the TEE's signature, along with
 the server's TLS identity public key (TIK-S).
-The Evidence type in the evidence_request extension MUST contain 
-a single value selected from the evidence_request extension in 
+The Evidence type in the evidence_request extension MUST contain
+a single value selected from the evidence_request extension in
 the ClientHello.
 
 ## Passport Model
