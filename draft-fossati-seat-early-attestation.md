@@ -223,6 +223,30 @@ If attestation-only authentication is desired (e.g., for specialized use cases i
 provisioning of the TLS stack), implementations SHOULD use self-signed X.509 certificates. In these cases, additional security controls SHOULD be provided,
 such as hardware-enforced time limitations, or use of platform-level APIs in the case of cloud infrastructure.
 
+## Integration into the TLS Handshake
+
+The lightweight integration of attestation into the TLS handshake is designed to have
+minimal impact on the existing TLS security properties. The changes consist of:
+
+- Negotiation extensions: New TLS extensions are added to ClientHello and
+  EncryptedExtensions messages to negotiate the use of attestation and indicate
+  supported attestation formats and verifiers.
+
+- Independent handshake message: A new `Attestation` handshake message is
+  introduced that carries attestation Evidence or Attestation Results. This message
+  is completely independent of the standard TLS handshake flow and does not
+  interfere with existing handshake messages or their processing.
+
+- Independent key derivation: Key derivation for attestation (to be defined) will
+  be independent of the regular TLS key schedule. This ensures that attestation
+  processing does not affect the standard TLS key derivation and security properties.
+
+This minimal integration approach provides intuitive reasoning why TLS security is
+not adversely affected by the addition of attestation. The attestation components
+operate independently and do not modify the core TLS handshake protocol or key
+derivation mechanisms. However, formal validation of these security properties is
+still needed.
+
 # Attestation Extensions
 
 As typical with new features in TLS, the client indicates support for the new
@@ -338,8 +362,7 @@ attestation, and the other uses the background check model.
 ## Handshake Overview {#handshake-overview}
 
 The handshake defined here is analogous to certificate-based authentication in a regular TLS handshake.
-We use the TLS Identity Key (TIK) which is identical to the certificate's private key.
-This key is attested, with attestation being carried in a new Attestation handshake message (see {{attestation-message-section}}). Following that, the peer being attested proves possession of the private key using the CertificateVerify message, which remains unchanged from baseline TLS.
+The TLS Identity Key (TIK) is attested by the TEE, with attestation being carried in a new Attestation handshake message (see {{attestation-message-section}}). Following that, the peer being attested proves possession of the private key using the CertificateVerify message, which remains unchanged from baseline TLS.
 
 The protocol combines attestation with X.509 certificate authentication. If attestation-only authentication is desired, implementations SHOULD use self-signed X.509 certificates.
 
@@ -503,6 +526,64 @@ Auth | {CertificateVerify}
        [Application Data]      <------->  [Application Data]
 ~~~~
 {: #figure-passport-model2 title="TLS Server Providing Attestation Results to TLS Client."}
+
+## Cryptographic Operations {#crypto-ops}
+
+This section defines the key derivation for attestation, which operates independently
+from the regular TLS key schedule as described in {{Section 7.1 of RFC8446}}.
+
+The attestation key derivation uses HKDF {{Section 7.1 of RFC8446}} to derive
+attestation-specific secrets from the TLS master secret. Two attestation master
+secrets are derived: one for the client (`c_attestation_master`) and one for the
+server (`s_attestation_master`).
+
+The key derivation follows this structure:
+
+~~~~
+   0
+   |
+   v
+(EC)DHE -> HKDF-Extract = Handshake Secret
+   |
+   v
+Derive-Secret(., "derived secret", "")
+   |
+   v
+0 -> HKDF-Extract = Master Secret
+   |
+   +-> Derive-Secret(., "c attestation master", ClientHello...ServerHello)
+   |                     = c_attestation_master
+   |
+   +-> Derive-Secret(., "s attestation master", ClientHello...ServerHello)
+   |                     = s_attestation_master
+~~~~
+{: #figure-attestation-key-schedule title="Attestation Key Schedule."}
+
+The attestation master secrets (`c_attestation_master` and `s_attestation_master`)
+are derived from the TLS master secret using Derive-Secret as defined in
+{{Section 7.1 of RFC8446}}, with the labels "c attestation master" and
+"s attestation master" respectively, and the handshake transcript up to and
+including ServerHello as the context.
+
+The client's attestation secret (`c_attestation_secret`) that will be signed by
+the TEE is derived by applying HKDF-Expand-Label to `c_attestation_master` with
+the label "attestation" and the client's TLS public key as the context:
+
+~~~~
+c_attestation_secret = HKDF-Expand-Label(c_attestation_master, "attestation",
+                                         TLS_Client_Public_Key, Hash.length)
+~~~~
+
+Similarly, the server's attestation secret (`s_attestation_secret`) is derived
+from `s_attestation_master`:
+
+~~~~
+s_attestation_secret = HKDF-Expand-Label(s_attestation_master, "attestation",
+                                         TLS_Server_Public_Key, Hash.length)
+~~~~
+
+This ensures that each attestation secret is bound to the specific TLS public
+key being attested.
 
 # After The Initial Handshake {#after-handshake}
 
@@ -915,15 +996,17 @@ subregistry of the "Transport Layer Security (TLS) Parameters" registry
 - Reference: [This document]
 - Comment:
 
-## TLS Certificate Types
+## TLS Handshake Message Types
 
-IANA is requested to allocate a new value in the "TLS Certificate Types"
-subregistry of the "Transport Layer Security (TLS) Extensions"
-registry {{TLS-Ext-Registry}}, as follows:
+IANA is requested to allocate a new value in the "TLS HandshakeType" registry
+of the "Transport Layer Security (TLS) Parameters" registry {{TLS-Param-Registry}},
+as follows:
 
--   Value: TBD2
--   Description: Attestation
--   Reference: [This document]
+- Value: TBD
+- Description: attestation
+- DTLS-OK: Y
+- Reference: [This document]
+- Comment: Used to carry attestation Evidence or Attestation Results in the TLS handshake
 
 --- back
 
