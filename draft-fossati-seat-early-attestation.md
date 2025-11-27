@@ -154,7 +154,7 @@ In some cases, it is also desirable to ensure that the peer runtime environment 
 Such an assurance can be achieved using attestation which is a process by which an entity produces Evidence about itself that another party can use to appraise whether that entity is found in a secure state.
 This document describes a series of protocol extensions to the TLS 1.3 handshake that enables the binding of the TLS authentication key to a remote attestation session.
 This enables an entity capable of producing attestation Evidence, such as a confidential workload running in a Trusted Execution Environment (TEE), or an IoT device that is trying to authenticate itself to a network access point, to present a more comprehensive set of security metrics to its peer.
-These extensions have been designed to allow the peers to use any attestation technology, in any remote attestation topology, and mutually.
+These extensions have been designed to allow the peers to use any attestation technology, in any remote attestation topology, and to use them mutually.
 
 --- middle
 
@@ -165,7 +165,7 @@ This document describes a series of protocol extensions to the TLS 1.3 handshake
 This enables an attester, such as a confidential workload running in a Trusted Execution Environment (TEE) {{-teep-arch}}, or an IoT device that is trying to authenticate itself to a network access point, to present a more comprehensive set of security metrics to its peer.
 This, in turn, allows for the implementation of authorization policies at the relying parties that are based on stronger security signals.
 
-Given the variety of deployed and emerging attestation technologies (e.g., {{TPM1.2}}, {{TPM2.0}}, {{-rats-eat}}) these extensions have been explicitly designed to be agnostic of the attestation formats.
+Given the variety of deployed and emerging attestation technologies (e.g., {{TPM1.2}}, {{TPM2.0}}, {{-rats-eat}}) these extensions have been explicitly designed to be agnostic to the attestation formats.
 This is achieved by reusing the generic encapsulation defined in {{-cmw}} for transporting Evidence and Attestation Result payloads in the TLS Attestation handshake message.
 
 This specification provides both one-way (server-only) and mutual (client and server) authentication using traditional TLS authentication combined with attestation, and allows the attestation topologies at each peer to be independent of each other.
@@ -206,7 +206,8 @@ The basic functional goal is to link the authenticated key exchange of TLS with 
 The requirement is that the attester can provide Evidence containing the security status of both the signing key and the platform that is hosting it.
 The associated security goal is to obtain such binding so that no replay, relay or splicing from an adversary is possible.
 
-The protocol's security relies on the verifiable binding between the TLS Identity Key
+The protocol's security relies on the verifiable binding between the TLS Identity Key, the
+specific TLS session
 and the platform state through attestation Evidence or Attestation Results conveyed
 in the CMW (Conceptual Message Wrapper) {{-cmw}} payload.
 
@@ -237,8 +238,7 @@ minimal impact on the existing TLS security properties. The changes consist of:
   is completely independent of the standard TLS handshake flow and does not
   interfere with existing handshake messages or their processing.
 
-- Independent key derivation: Key derivation for attestation (to be defined) will
-  be independent of the regular TLS key schedule. This ensures that attestation
+- Independent key derivation: Key derivation for attestation (see {{crypto-ops}}) ensures independence of the regular TLS key schedule. As a result, attestation
   processing does not affect the standard TLS key derivation and security properties.
 
 This minimal integration approach provides intuitive reasoning why TLS security is
@@ -251,11 +251,11 @@ still needed.
 
 As typical with new features in TLS, the client indicates support for the new
 extension in the ClientHello message. The newly introduced extensions allow
-attestation Evidence or Attestation Results to be exchanged. TLS nonces are used
-to guarantee freshness of the exchanged Evidence when the background check
-model is in use. Nonces are not used in the passport model, because the expectation
-of freshness is more relaxed and is only governed by the lifetime of the signed
-Attestation Results.
+attestation Evidence or Attestation Results to be exchanged. Freshness of the
+exchanged Evidence is guaranteed through secret derivation from the TLS master
+secret and message transcript (see {{crypto-ops}}) when the background check
+model is in use. In the passport model, freshness expectations are more relaxed
+and are governed by the lifetime of the signed Attestation Results.
 
 When either the Evidence or the Attestation Results extension is successfully
 negotiated, attestation Evidence or Attestation Results are conveyed in an
@@ -266,9 +266,9 @@ Attestation Results encoded according to {{-cmw}}.
 The attestation payload MUST contain assertions relating to the attester's TLS
 Identity Key (TIK-C for client attester, TIK-S for server attester), which
 associate the private key with the attestation information. The TEE's signature
-over the Evidence or AttestationResults within the CMW MUST include both nonces
-(when using background check model) and the attester's TLS identity public key,
-as specified in {{attestation-message-section}}.
+over the Evidence or AttestationResults within the CMW MUST include a secret derived
+from the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+and the attester's TLS identity public key, as specified in {{attestation-message-section}}.
 
 The relying party can obtain and appraise the remote Attestation Results either
 directly from the Attestation message (in the passport model), or by relaying
@@ -336,13 +336,13 @@ or Attestation Results (in passport model) that binds the TLS Identity Key (TIK)
 to the platform and workload state. The TEE's signature over the Evidence or
 AttestationResults within the CMW MUST include:
 
-- Both nonces (client nonce from ClientHello extension and server nonce from
-  ServerHello extension) when using the background check model
+- A secret derived from the TLS master secret and the message transcript, up to ServerHello,
+ensuring freshness of the attestation.
 - The attester's TLS identity public key (TIK-C for client attester, TIK-S for
   server attester)
 
 This binding ensures that the attested key is the one used in the TLS handshake
-and provides freshness guarantees through the nonces.
+and provides freshness guarantees through secret derivation. See {{crypto-ops}} for details.
 
 # Use of Attestation in the TLS Handshake
 
@@ -373,9 +373,11 @@ payload as defined in {{-cmw}}.
 ## TLS Client Authenticating Using Evidence
 
 In this use case, the TLS server (acting as a relying party) challenges the TLS
-client (as the attester) to provide Evidence. The TLS server needs to provide a
-nonce in the ServerHello message to the TLS client so that the
-attestation service can feed the nonce into the generation of the Evidence. The
+client (as the attester) to provide Evidence. A session-specific value is derived
+(see {{crypto-ops}})
+which incorporates randomness from both client and server, and this value is fed into the generation
+of the Evidence.
+The
 client sends the Evidence in an `Attestation` handshake message after the
 `Certificate` message. The TLS server, when receiving the Evidence, will have
 to contact the verifier (which is not shown in the diagram).
@@ -399,7 +401,6 @@ Exch | + evidence_proposal
                                                                v
                                         {EncryptedExtensions}  ^  Server
                                           + evidence_proposal  |  Params
-                                                      (nonce)  |
                                          {CertificateRequest}  v
                                                {Certificate}  ^
                                          {Attestation}        |
@@ -433,7 +434,6 @@ genuine.
 
 Key  ^ ClientHello
 Exch | + evidence_request
-     |   (nonce)
      | + key_share*
      | + signature_algorithms*
      v                         -------->
@@ -585,6 +585,9 @@ s_attestation_secret = HKDF-Expand-Label(s_attestation_master, "attestation",
 This ensures that each attestation secret is bound to the specific TLS public
 key being attested.
 
+<cref> TODO: Define key derivation for Extended Key Update (reattestation) as
+described in {{reattestation}}. </cref>
+
 # After The Initial Handshake {#after-handshake}
 
 ## Session Resumption {#session-resumption}
@@ -614,8 +617,10 @@ require refresh. This document supports reattestation using Extended Key Update
 
 Extended Key Update provides a 4-message handshake that can be used similarly
 to the initial handshake for reattestation purposes. When performing
-reattestation, both peers MUST provide fresh nonces to ensure freshness of the
-attestation Evidence or Attestation Results. The nonces are obtained from the
+reattestation, both peers provide fresh entropy in the KeyShare messages, and this
+ensures freshness of the
+attestation Evidence or Attestation Results. A secret value is derived
+(see {{crypto-ops}}) from the
 EKU handshake messages and included in the TEE's signature of the Evidence or
 AttestationResults within the CMW, as specified in {{attestation-message-section}}.
 
@@ -657,7 +662,6 @@ the CMW payload is sent in the `Attestation` handshake message (see {{attestatio
         select(Handshake.msg_type) {
             case client_hello:
                 EvidenceType supported_evidence_types<1..2^8-1>;
-                opaque nonce<8..2^8-1>;
             case server_hello:
             case encrypted_extensions:
                 EvidenceType selected_evidence_type;
@@ -671,7 +675,6 @@ the CMW payload is sent in the `Attestation` handshake message (see {{attestatio
             case server_hello:
             case encrypted_extensions:
                 EvidenceType selected_evidence_type;
-                opaque nonce<8..2^8-1>;
         }
     } evidenceProposalTypeExtension;
 ~~~~
@@ -771,7 +774,7 @@ when requested using a CertificateRequest message.
 
 The evidence_request extension in the ClientHello message indicates
 the Evidence types the client challenges the server to
-provide in a subsequent Certificate payload.
+provide in an `Attestation` handshake message.
 
 The evidence_proposal and evidence_request extensions sent in
 the ClientHello each carry a list of supported Evidence types,
@@ -820,10 +823,9 @@ evidence_proposal extension in the EncryptedExtensions. This
 evidence_proposal extension in the EncryptedExtensions then indicates
 what Evidence format the client is requested to provide in an
 `Attestation` handshake message sent after the `Certificate` message.
-The Evidence contained in the CMW payload MUST include both the client nonce
-(from the ClientHello extension) and the server nonce (from the
-ServerHello extension) in the TEE's signature, along with
-the client's TLS identity public key (TIK-C).
+The Evidence contained in the CMW payload MUST include a secret derived from
+the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+in the TEE's signature, along with the client's TLS identity public key (TIK-C).
 The value conveyed in the evidence_proposal extension by the server MUST be
 selected from one of the values provided in the evidence_proposal extension
 sent in the ClientHello.  The server MUST also send a CertificateRequest
@@ -841,9 +843,9 @@ in an `Attestation` handshake message. With the evidence_request
 extension in the EncryptedExtensions, the server indicates the
 Evidence type carried in the `Attestation` handshake message sent
 after the EncryptedExtensions by the server. The Evidence
-contained in the CMW payload MUST include both the client nonce
-(from the ClientHello extension) and the server nonce (from the
-ServerHello extension) in the TEE's signature, along with
+contained in the CMW payload MUST include a secret derived from
+the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+in the TEE's signature, along with
 the server's TLS identity public key (TIK-S).
 The Evidence type in the evidence_request extension MUST contain
 a single value selected from the evidence_request extension in
@@ -852,7 +854,7 @@ the ClientHello.
 ## Passport Model
 
 The `results_proposal` and `results_request` extensions are used to negotiate
-the protocol defined in this document, and in particular the verifier identities supported by each peer. These
+the protocol defined in this document, and in particular to negotiate the verifier identities supported by each peer. These
 extensions are included in the ClientHello and ServerHello messages.
 
 ### Client Hello
