@@ -75,7 +75,7 @@ author:
 
 normative:
   RFC2119:
-  RFC8446: tls13
+  I-D.ietf-tls-rfc8446bis: tls13
   I-D.ietf-rats-msg-wrap: cmw
   I-D.ietf-tls-extended-key-update: eku
 informative:
@@ -252,7 +252,7 @@ still needed.
 As typical with new features in TLS, the client indicates support for the new
 extension in the ClientHello message. The newly introduced extensions allow
 attestation Evidence or Attestation Results to be exchanged. Freshness of the
-exchanged Evidence is guaranteed through secret derivation from the TLS master
+exchanged Evidence is guaranteed through secret derivation from the TLS main
 secret and message transcript (see {{crypto-ops}}) when the background check
 model is in use. In the passport model, freshness expectations are more relaxed
 and are governed by the lifetime of the signed Attestation Results.
@@ -267,7 +267,7 @@ The attestation payload MUST contain assertions relating to the attester's TLS
 Identity Key (TIK-C for client attester, TIK-S for server attester), which
 associate the private key with the attestation information. The TEE's signature
 over the Evidence or AttestationResults within the CMW MUST include a secret derived
-from the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+from the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 and the attester's TLS identity public key, as specified in {{attestation-message-section}}.
 
 The relying party can obtain and appraise the remote Attestation Results either
@@ -306,7 +306,7 @@ The `Attestation` message structure is defined as follows:
 
 ~~~~
     enum {
-        /* other handshake message types defined in RFC 8446 */
+        /* other handshake message types defined in draft-ietf-tls-rfc8446bis */
         attestation(TBD),
         (255)
     } HandshakeType;
@@ -336,7 +336,7 @@ or Attestation Results (in passport model) that binds the TLS Identity Key (TIK)
 to the platform and workload state. The TEE's signature over the Evidence or
 AttestationResults within the CMW MUST include:
 
-- A secret derived from the TLS master secret and the message transcript, up to ServerHello,
+- A secret derived from the TLS main secret and the message transcript, up to ServerHello,
 ensuring freshness of the attestation.
 - The attester's TLS identity public key (TIK-C for client attester, TIK-S for
   server attester)
@@ -530,12 +530,12 @@ Auth | {CertificateVerify}
 ## Cryptographic Operations {#crypto-ops}
 
 This section defines the key derivation for attestation, which operates independently
-from the regular TLS key schedule as described in {{Section 7.1 of RFC8446}}.
+from the regular TLS key schedule as described in {{Section 7.1 of -tls13}}.
 
-The attestation key derivation uses HKDF {{Section 7.1 of RFC8446}} to derive
-attestation-specific secrets from the TLS master secret. Two attestation master
-secrets are derived: one for the client (`c_attestation_master`) and one for the
-server (`s_attestation_master`).
+The attestation key derivation uses HKDF {{Section 7.1 of -tls13}} to derive
+attestation-specific secrets from the TLS main secret. Two attestation main
+secrets are derived: one for the client (`c_attestation_main`) and one for the
+server (`s_attestation_main`).
 
 The key derivation follows this structure:
 
@@ -549,36 +549,38 @@ The key derivation follows this structure:
 Derive-Secret(., "derived secret", "")
    |
    v
-0 -> HKDF-Extract = Master Secret
+0 -> HKDF-Extract = Main Secret
    |
    +-> Derive-Secret(., "c attestation master", ClientHello...ServerHello)
-   |                     = c_attestation_master
+   |                     = c_attestation_main
    |
    +-> Derive-Secret(., "s attestation master", ClientHello...ServerHello)
-   |                     = s_attestation_master
+   |                     = s_attestation_main
 ~~~~
 {: #figure-attestation-key-schedule title="Attestation Key Schedule."}
 
-The attestation master secrets (`c_attestation_master` and `s_attestation_master`)
-are derived from the TLS master secret using Derive-Secret as defined in
-{{Section 7.1 of RFC8446}}, with the labels "c attestation master" and
+The attestation main secrets (`c_attestation_main` and `s_attestation_main`)
+are derived from the TLS main secret using Derive-Secret as defined in
+{{Section 7.1 of -tls13}}, with the labels "c attestation master" and
 "s attestation master" respectively, and the handshake transcript up to and
-including ServerHello as the context.
+including ServerHello as the context. Note that the labels use "master" for
+compatibility with the TLS key schedule, even though the values are referred
+to as "main" secrets.
 
 The client's attestation secret (`c_attestation_secret`) that will be signed by
-the TEE is derived by applying HKDF-Expand-Label to `c_attestation_master` with
+the TEE is derived by applying HKDF-Expand-Label to `c_attestation_main` with
 the label "attestation" and the client's TLS public key as the context:
 
 ~~~~
-c_attestation_secret = HKDF-Expand-Label(c_attestation_master, "attestation",
+c_attestation_secret = HKDF-Expand-Label(c_attestation_main, "attestation",
                                          TLS_Client_Public_Key, Hash.length)
 ~~~~
 
 Similarly, the server's attestation secret (`s_attestation_secret`) is derived
-from `s_attestation_master`:
+from `s_attestation_main`:
 
 ~~~~
-s_attestation_secret = HKDF-Expand-Label(s_attestation_master, "attestation",
+s_attestation_secret = HKDF-Expand-Label(s_attestation_main, "attestation",
                                          TLS_Server_Public_Key, Hash.length)
 ~~~~
 
@@ -593,7 +595,7 @@ described in {{reattestation}}. </cref>
 ## Session Resumption {#session-resumption}
 
 TLS 1.3 supports session resumption using Pre-Shared Keys (PSK) as defined in
-{{Section 4.6 of RFC8446}}. When using attestation, session resumption works
+{{Section 4.6 of -tls13}}. When using attestation, session resumption works
 normally when reattestation is not required.
 
 If reattestation is required according to local policy (e.g., based on timing
@@ -824,7 +826,7 @@ evidence_proposal extension in the EncryptedExtensions then indicates
 what Evidence format the client is requested to provide in an
 `Attestation` handshake message sent after the `Certificate` message.
 The Evidence contained in the CMW payload MUST include a secret derived from
-the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with the client's TLS identity public key (TIK-C).
 The value conveyed in the evidence_proposal extension by the server MUST be
 selected from one of the values provided in the evidence_proposal extension
@@ -844,7 +846,7 @@ extension in the EncryptedExtensions, the server indicates the
 Evidence type carried in the `Attestation` handshake message sent
 after the EncryptedExtensions by the server. The Evidence
 contained in the CMW payload MUST include a secret derived from
-the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with
 the server's TLS identity public key (TIK-S).
 The Evidence type in the evidence_request extension MUST contain
