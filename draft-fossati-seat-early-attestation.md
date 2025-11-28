@@ -75,7 +75,7 @@ author:
 
 normative:
   RFC2119:
-  RFC8446: tls13
+  I-D.ietf-tls-rfc8446bis: tls13
   I-D.ietf-rats-msg-wrap: cmw
   I-D.ietf-tls-extended-key-update: eku
 informative:
@@ -166,7 +166,7 @@ This enables an attester, such as a confidential workload running in a Trusted E
 This, in turn, allows for the implementation of authorization policies at the relying parties that are based on stronger security signals.
 
 Given the variety of deployed and emerging attestation technologies (e.g., {{TPM1.2}}, {{TPM2.0}}, {{-rats-eat}}) these extensions have been explicitly designed to be agnostic to the attestation formats.
-This is achieved by reusing the generic encapsulation defined in {{-cmw}} for transporting Evidence and Attestation Result payloads in the TLS Attestation handshake message.
+This is achieved by reusing the generic encapsulation defined in {{-cmw}} for transporting Evidence and Attestation Results payloads in the TLS Attestation handshake message.
 
 This specification provides both one-way (server-only) and mutual (client and server) authentication using traditional TLS authentication combined with attestation, and allows the attestation topologies at each peer to be independent of each other.
 The proposed design supports both background-check and passport topologies, as described in {{Sections 5.2 and 5.1 of -rats-arch}}.
@@ -252,9 +252,9 @@ still needed.
 As typical with new features in TLS, the client indicates support for the new
 extension in the ClientHello message. The newly introduced extensions allow
 attestation Evidence or Attestation Results to be exchanged. Freshness of the
-exchanged Evidence is guaranteed through secret derivation from the TLS master
-secret and message transcript (see {{crypto-ops}}) when the background check
-model is in use. In the passport model, freshness expectations are more relaxed
+exchanged Evidence is guaranteed through secret derivation from the TLS main
+secret and message transcript (see {{crypto-ops}}) when the Background Check
+Model is in use. In the Passport Model, freshness expectations are more relaxed
 and are governed by the lifetime of the signed Attestation Results.
 
 When either the Evidence or the Attestation Results extension is successfully
@@ -267,16 +267,16 @@ The attestation payload MUST contain assertions relating to the attester's TLS
 Identity Key (TIK-C for client attester, TIK-S for server attester), which
 associate the private key with the attestation information. The TEE's signature
 over the Evidence or AttestationResults within the CMW MUST include a secret derived
-from the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+from the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 and the attester's TLS identity public key, as specified in {{attestation-message-section}}.
 
 The relying party can obtain and appraise the remote Attestation Results either
-directly from the Attestation message (in the passport model), or by relaying
+directly from the Attestation message (in the Passport Model), or by relaying
 the Evidence from the Attestation message to the Verifier and receiving the
 Attestation Results. Subsequently, the attested key is used to verify the
 CertificateVerify message, which remains unchanged from baseline TLS.
 
-When using the passport model, the remote Attestation Results obtained by the
+When using the Passport Model, the remote Attestation Results obtained by the
 attester from its trusted Verifiers can be cached and used for any number of
 subsequent TLS handshakes, as long as the freshness policy requirements are
 satisfied.
@@ -306,7 +306,7 @@ The `Attestation` message structure is defined as follows:
 
 ~~~~
     enum {
-        /* other handshake message types defined in RFC 8446 */
+        /* other handshake message types defined in {{I-D.ietf-tls-rfc8446bis}} */
         attestation(TBD),
         (255)
     } HandshakeType;
@@ -331,12 +331,12 @@ The `cmw_payload` field contains a CMW structure as defined in {{-cmw}}.
 Both JSON and CBOR serializations are allowed in CMW, with the emitter choosing
 which serialization to use.
 
-The CMW payload MUST contain attestation Evidence (in background check model)
-or Attestation Results (in passport model) that binds the TLS Identity Key (TIK)
+The CMW payload MUST contain attestation Evidence (in Background Check Model)
+or Attestation Results (in Passport Model) that binds the TLS Identity Key (TIK)
 to the platform and workload state. The TEE's signature over the Evidence or
 AttestationResults within the CMW MUST include:
 
-- A secret derived from the TLS master secret and the message transcript, up to ServerHello,
+- A secret derived from the TLS main secret and the message transcript, up to ServerHello,
 ensuring freshness of the attestation.
 - The attester's TLS identity public key (TIK-C for client attester, TIK-S for
   server attester)
@@ -346,8 +346,8 @@ and provides freshness guarantees through secret derivation. See {{crypto-ops}} 
 
 # Use of Attestation in the TLS Handshake
 
-For both the passport model (described in section 5.1 of {{RFC9334}}) and
-background check model (described in Section 5.2 of {{RFC9334}}) the following
+For both the Passport Model (described in section 5.1 of {{RFC9334}}) and
+Background Check Model (described in Section 5.2 of {{RFC9334}}) the following
 modes of operation are allowed when used with TLS, namely:
 
 - TLS client is the attester,
@@ -356,8 +356,8 @@ modes of operation are allowed when used with TLS, namely:
 
 We will show the message exchanges of the first two cases in sub-sections below.
 Mutual authentication via attestation combines these two (non-interfering)
-flows, including cases where one of the peers uses the passport model for its
-attestation, and the other uses the background check model.
+flows, including cases where one of the peers uses the Passport Model for its
+attestation, and the other uses the Background Check Model.
 
 ## Handshake Overview {#handshake-overview}
 
@@ -530,12 +530,12 @@ Auth | {CertificateVerify}
 ## Cryptographic Operations {#crypto-ops}
 
 This section defines the key derivation for attestation, which operates independently
-from the regular TLS key schedule as described in {{Section 7.1 of RFC8446}}.
+from the regular TLS key schedule as described in {{Section 7.1 of I-D.ietf-tls-rfc8446bis}}.
 
-The attestation key derivation uses HKDF {{Section 7.1 of RFC8446}} to derive
-attestation-specific secrets from the TLS master secret. Two attestation master
-secrets are derived: one for the client (`c_attestation_master`) and one for the
-server (`s_attestation_master`).
+The attestation key derivation uses HKDF {{Section 7.1 of I-D.ietf-tls-rfc8446bis}} to derive
+attestation-specific secrets from the TLS main secret. Two attestation main
+secrets are derived: one for the client (`c_attestation_main`) and one for the
+server (`s_attestation_main`).
 
 The key derivation follows this structure:
 
@@ -552,33 +552,33 @@ Derive-Secret(., "derived secret", "")
 0 -> HKDF-Extract = Master Secret
    |
    +-> Derive-Secret(., "c attestation master", ClientHello...ServerHello)
-   |                     = c_attestation_master
+   |                     = c_attestation_main
    |
    +-> Derive-Secret(., "s attestation master", ClientHello...ServerHello)
-   |                     = s_attestation_master
+   |                     = s_attestation_main
 ~~~~
 {: #figure-attestation-key-schedule title="Attestation Key Schedule."}
 
-The attestation master secrets (`c_attestation_master` and `s_attestation_master`)
-are derived from the TLS master secret using Derive-Secret as defined in
-{{Section 7.1 of RFC8446}}, with the labels "c attestation master" and
+The attestation main secrets (`c_attestation_main` and `s_attestation_main`)
+are derived from the TLS main secret using Derive-Secret as defined in
+{{Section 7.1 of I-D.ietf-tls-rfc8446bis}}, with the labels "c attestation master" and
 "s attestation master" respectively, and the handshake transcript up to and
 including ServerHello as the context.
 
 The client's attestation secret (`c_attestation_secret`) that will be signed by
-the TEE is derived by applying HKDF-Expand-Label to `c_attestation_master` with
+the TEE is derived by applying HKDF-Expand-Label to `c_attestation_main` with
 the label "attestation" and the client's TLS public key as the context:
 
 ~~~~
-c_attestation_secret = HKDF-Expand-Label(c_attestation_master, "attestation",
+c_attestation_secret = HKDF-Expand-Label(c_attestation_main, "attestation",
                                          TLS_Client_Public_Key, Hash.length)
 ~~~~
 
 Similarly, the server's attestation secret (`s_attestation_secret`) is derived
-from `s_attestation_master`:
+from `s_attestation_main`:
 
 ~~~~
-s_attestation_secret = HKDF-Expand-Label(s_attestation_master, "attestation",
+s_attestation_secret = HKDF-Expand-Label(s_attestation_main, "attestation",
                                          TLS_Server_Public_Key, Hash.length)
 ~~~~
 
@@ -596,7 +596,7 @@ session resumption, reattestation and the interaction between them.
 ## Session Resumption {#session-resumption}
 
 TLS 1.3 supports session resumption using Pre-Shared Keys (PSK) as defined in
-{{Section 4.6 of RFC8446}}. When using attestation, session resumption works
+{{Section 4.6 of I-D.ietf-tls-rfc8446bis}}. When using attestation, session resumption works
 normally when reattestation is not required.
 
 If client reattestation is required according to local policy (e.g., based on timing
@@ -638,8 +638,8 @@ state, or security policy requirements.
 # Negotiating This Protocol {#negotiating-protocol}
 
 This section defines the TLS extensions used to negotiate the use of attestation
-in the TLS handshake. Two models are supported: the Background Check model, where
-Evidence is exchanged and verified during the handshake, and the Passport model,
+in the TLS handshake. Two models are supported: the Background Check Model, where
+Evidence is exchanged and verified during the handshake, and the Passport Model,
 where pre-verified Attestation Results are presented. The extensions defined
 here allow peers to indicate their support for attestation and negotiate which
 attestation format and Verifier to use.
@@ -719,7 +719,7 @@ Values for content_format are defined in {{iana-content-formats}}.
 ~~~~
 {: #figure-extension-results title="TLS Extension Structure for Attestation Results."}
 
-In the Passport model, Attestation Results are sent in an `Attestation` handshake
+In the Passport Model, Attestation Results are sent in an `Attestation` handshake
 message (see {{attestation-message-section}}) containing a CMW structure. The CMW
 structure is defined in {{-cmw}}.
 
@@ -770,12 +770,11 @@ Auth | {Attestation*}
 ### Client Hello
 
 To indicate the support for passing Evidence in TLS following the
-background check model, clients include the evidence_proposal
+Background Check Model, clients include the evidence_proposal
 and/or the evidence_request extensions in the ClientHello.
 
 The evidence_proposal extension in the ClientHello message indicates
-the Evidence types the client is able to provide to the server,
-when requested using a CertificateRequest message.
+the Evidence types the client is able to provide to the server.
 
 The evidence_request extension in the ClientHello message indicates
 the Evidence types the client challenges the server to
@@ -821,22 +820,20 @@ extension, then three outcomes are possible:
    this case, the processing rules described below are followed.
 
 The evidence_proposal extension in the ClientHello indicates
-the Evidence types the client is able to provide to the server,
-when challenged using a CertificateRequest message.  If the
+the Evidence types the client is able to provide to the server.  If the
 server wants to request Evidence from the client, it MUST include the
 evidence_proposal extension in the EncryptedExtensions. This
 evidence_proposal extension in the EncryptedExtensions then indicates
 what Evidence format the client is requested to provide in an
 `Attestation` handshake message sent after the `Certificate` message.
 The Evidence contained in the CMW payload MUST include a secret derived from
-the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with the client's TLS identity public key (TIK-C).
 The value conveyed in the evidence_proposal extension by the server MUST be
 selected from one of the values provided in the evidence_proposal extension
-sent in the ClientHello.  The server MUST also send a CertificateRequest
-message.
+sent in the ClientHello.
 
-If the server does not send a CertificateRequest message or none
+If none
 of the Evidence types supported by the client (as indicated in the
 evidence_proposal extension in the ClientHello) match the
 server-supported Evidence types, then the evidence_proposal
@@ -849,7 +846,7 @@ extension in the EncryptedExtensions, the server indicates the
 Evidence type carried in the `Attestation` handshake message sent
 after the EncryptedExtensions by the server. The Evidence
 contained in the CMW payload MUST include a secret derived from
-the TLS master secret and the message transcript up to ServerHello (see {{crypto-ops}})
+the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with
 the server's TLS identity public key (TIK-S).
 The Evidence type in the evidence_request extension MUST contain
@@ -865,12 +862,11 @@ extensions are included in the ClientHello and ServerHello messages.
 ### Client Hello
 
 To indicate the support for passing Attestation Results in TLS following the
-passport model, clients include the results_proposal and/or the results_request
+Passport Model, clients include the results_proposal and/or the results_request
 extensions in the ClientHello message.
 
 The results_proposal extension in the ClientHello message indicates the Verifier
-identities from which the client can relay Attestation Results, when requested using a
-CertificateRequest message. The client sends the Attestation Results in an
+identities from which the client can relay Attestation Results. The client sends the Attestation Results in an
 `Attestation` handshake message after the `Certificate` message.
 
 The results_request extension in the ClientHello message indicates the Verifier
@@ -914,7 +910,7 @@ possible:
 
 The results_proposal extension in the ClientHello indicates the Verifier
 identities from which the client is able to provide Attestation Results to the
-server, when challenged using a CertificateRequest message.  If the server
+server.  If the server
 wants to request Attestation Results from the client, it MUST include the
 results_proposal extension in the EncryptedExtensions. This results_proposal
 extension in the EncryptedExtensions then indicates what Verifier the client is
@@ -922,14 +918,13 @@ requested to provide Attestation Results from in an `Attestation` handshake
 message sent after the `Certificate` message.  The value conveyed in the
 results_proposal extension by the server MUST be selected from one of the
 values provided in the results_proposal extension sent in the ClientHello.
-The server MUST also send a CertificateRequest message.
 
-If the server does not send a CertificateRequest message or none of the
+If none of the
 Verifier identities proposed by the client (as indicated in the results_proposal
 extension in the ClientHello) match the server-trusted Verifiers, then the
 results_proposal extension in the ServerHello MUST be omitted.
 
-The results_request extension in the ClientHello indicates what verifiers the
+The results_request extension in the ClientHello indicates what Verifiers the
 client trusts as issuers of Attestation Results for the server. With the
 results_request extension in the EncryptedExtensions, the server indicates the
 identity of the Verifier who issued the Attestation Results carried in the
