@@ -628,6 +628,9 @@ attestation Evidence or Attestation Results. A secret value is derived
 EKU handshake messages and included in the TEE's signature of the Evidence or
 AttestationResults within the CMW, as specified in {{attestation-message-section}}.
 
+Reattestation uses the Attestation formats that were negotiated during the initial handshake,
+there is no re-negotiation at this stage.
+
 The decision to initiate reattestation is per local policy and may be based on
 factors such as elapsed time since the last attestation, changes in platform
 state, or security policy requirements.
@@ -649,10 +652,8 @@ the CMW payload is sent in the `Attestation` handshake message (see {{attestatio
 
 ~~~~
     enum { CONTENT_FORMAT(0), MEDIA_TYPE(1) } typeEncoding;
-    enum { ATTESTATION(0), CERT_ATTESTATION(1) } credentialKind;
 
     struct {
-        credentialKind credential_kind;
         typeEncoding type_encoding;
         select (EvidenceType.type_encoding) {
             case CONTENT_FORMAT:
