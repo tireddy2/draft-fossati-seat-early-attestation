@@ -44,12 +44,6 @@ author:
        email: yaronf.ietf@gmail.com
 
  -
-       ins: P. Howard
-       name: Paul Howard
-       organization: Arm Limited
-       email: Paul.Howard@arm.com
-
- -
        ins: I. Mihalcea
        name: Ionut Mihalcea
        organization: Arm Limited
