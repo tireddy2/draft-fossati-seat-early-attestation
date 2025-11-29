@@ -170,9 +170,9 @@ The protocol we propose is implemented completely at the TLS level, resulting in
 
 * Implementation is within a single system component.
 * Security does not depend on application-level code, which tends to be less secure than widely shared infrastructure components.
-* It is easier to reason about the application's security, since both peers' identity and security posture are known when the handshake completes
+* It is easier to reason about the application's security, since the peers' identities and security postures are known as soon as the handshake completes
 and the TLS connection is established.
-* Application code does not need to change. At most, some configuration is needed similar to the current use of a certificate trust stores.
+* Application code does not need to change. At most, some configuration is needed, similar to the current use of certificate trust stores.
 
 This document does not mandate any particular attestation technology.
 Companion documents are expected to define specific attestation mechanisms.
@@ -658,6 +658,9 @@ Evidence is exchanged and verified during the handshake, and the Passport Model,
 where pre-verified Attestation Results are presented. The extensions defined
 here allow peers to indicate their support for attestation and negotiate which
 attestation format and Verifier to use.
+
+<cref>Can we simplify this structure: remove the dual request/proposal, and unify the evidence+AR to a single
+negotiation extension. But also express Passport mode with and without freshness.</cref>
 
 ## Evidence Extensions (Background Check Model) {#evidence-extensions}
 
