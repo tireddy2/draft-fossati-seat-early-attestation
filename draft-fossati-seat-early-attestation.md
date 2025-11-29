@@ -166,6 +166,14 @@ This specification provides both one-way (server-only) and mutual (client and se
 The proposed design supports both background-check and passport topologies, as described in {{Sections 5.2 and 5.1 of -rats-arch}}.
 This is detailed in {{evidence-extensions}} and {{attestation-results-extensions}}.
 
+The protocol we propose is implemented completely at the TLS level, resulting in several related advantages:
+
+* Implementation is within a single system component.
+* Security does not depend on application-level code, which tends to be less secure than widely shared infrastructure components.
+* It is easier to reason about the application's security, since both peers' identity and security posture are known when the handshake completes
+and the TLS connection is established.
+* Application code does not need to change. At most, some configuration is needed similar to the current use of a certificate trust stores.
+
 This document does not mandate any particular attestation technology.
 Companion documents are expected to define specific attestation mechanisms.
 
@@ -564,7 +572,7 @@ the TEE is derived by applying HKDF-Expand-Label to `c_attestation_main` with
 the label "attestation" and the client's TLS public key as the context:
 
 ~~~~
-c_attestation_secret = HKDF-Expand-Label(c_attestation_main, "attestation",
+c_attestation_secret = HKDF-Expand-Label(c_attestation_main, "Early Attestation",
                                          TLS_Client_Public_Key, Hash.length)
 ~~~~
 
@@ -572,7 +580,7 @@ Similarly, the server's attestation secret (`s_attestation_secret`) is derived
 from `s_attestation_main`:
 
 ~~~~
-s_attestation_secret = HKDF-Expand-Label(s_attestation_main, "attestation",
+s_attestation_secret = HKDF-Expand-Label(s_attestation_main, "Early Attestation",
                                          TLS_Server_Public_Key, Hash.length)
 ~~~~
 
@@ -581,6 +589,19 @@ key being attested.
 
 <cref> TODO: Define key derivation for Extended Key Update (reattestation) as
 described in {{reattestation}}. </cref>
+
+## The TLS Stack's Interface to the TEE
+
+When the TEE signs the Evidence or Attestation Results, it also binds them to the TLS Identity public key and the TLS
+session. TEE implementations differ, and some only allow a single nonce to be added to the signature with no associated checks.
+Therefore we adopt a defense-in-depth approach:
+
+* TEE wrapper libraries and TLS stacks SHOULD NOT allow direct access to the Evidence/AR generation API without checking the
+nonce. At the very least, the nonce SHOULD be the result of HKDF with an allowlist of labels.
+* The RP SHOULD NOT base its trust decision only on the identity of the issuer of the Evidence's (or AR's) trust root. It SHOULD also
+ensure that the software layer above it is endorsed.
+* The TEE itself, when possible, SHOULD generate the nonce by running HKDF with an allowlisted label and if it holds the TIK, SHOULD
+validate the pubic key.
 
 # After The Initial Handshake {#after-handshake}
 
