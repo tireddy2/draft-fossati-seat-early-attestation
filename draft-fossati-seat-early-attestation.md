@@ -33,11 +33,6 @@ venue:
 
 author:
  -
-       ins: H. Tschofenig
-       name: Hannes Tschofenig
-       email: hannes.tschofenig@gmx.net
-
- -
        ins: Y. Sheffer
        name: Yaron Sheffer
        organization: Intuit
@@ -56,19 +51,12 @@ author:
        email: Yogesh.Deshpande@arm.com
 
  -
-       ins: A. Niemi
-       name: Arto Niemi
-       organization: Huawei
-       email: arto.niemi@huawei.com
-
- -
        ins: T. Fossati
        name: Thomas Fossati
        organization: Linaro
        email: thomas.fossati@linaro.org
 
 normative:
-  RFC2119:
   I-D.ietf-tls-rfc8446bis: tls13
   I-D.ietf-rats-msg-wrap: cmw
   I-D.ietf-tls-extended-key-update: eku
@@ -102,7 +90,7 @@ informative:
   FIDO-REQS:
     target: https://fidoalliance.org/specs/fido-security-requirements/
     title: "FIDO Authenticator Security Requirements"
-    authors:
+    author:
        -
         ins: B. Peirani
         name: Beatrice Peirani
@@ -1033,6 +1021,10 @@ as follows:
 - DTLS-OK: Y
 - Reference: [This document]
 - Comment: Used to carry attestation Evidence or Attestation Results in the TLS handshake
+
+# Acknowledgements {#acknowledgements}
+
+We would like to thank Paul Howard, Arto Niemi, and Hannes Tschofenig for their contributions to earlier versions of this document.
 
 --- back
 
