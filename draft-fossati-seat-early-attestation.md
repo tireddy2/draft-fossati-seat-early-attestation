@@ -352,7 +352,7 @@ attestation, and the other uses the Background Check Model.
 ## Handshake Overview {#handshake-overview}
 
 The handshake defined here is analogous to certificate-based authentication in a regular TLS handshake.
-The TLS Identity Key (TIK) is attested by the TEE, with attestation being carried in a new Attestation handshake message (see {{attestation-message-section}}). Following that, the peer being attested proves possession of the private key using the CertificateVerify message, which remains unchanged from baseline TLS.
+The peer being attested first proves possession of the private key using the CertificateVerify message, which remains unchanged from baseline TLS. Following that, the TLS Identity Key (TIK) is attested by the TEE, with attestation being carried in a new Attestation handshake message (see {{attestation-message-section}}).
 
 The protocol combines attestation with X.509 certificate authentication. If attestation-only authentication is desired, implementations SHOULD use self-signed X.509 certificates.
 
@@ -369,7 +369,7 @@ which incorporates randomness from both client and server, and this value is fed
 of the Evidence.
 The
 client sends the Evidence in an `Attestation` handshake message after the
-`Certificate` message. The TLS server, when receiving the Evidence, will have
+`CertificateVerify` message. The TLS server, when receiving the Evidence, will have
 to contact the Verifier (which is not shown in the diagram).
 
 An example of this flow can be found in device onboarding where the
@@ -393,13 +393,13 @@ Exch | + evidence_proposal
                                           + evidence_proposal  |  Params
                                          {CertificateRequest}  v
                                                {Certificate}  ^
-                                         {Attestation}        |
-                                         {CertificateVerify}  | Auth
+                                         {CertificateVerify}  |
+                                         {Attestation}        | Auth
                                                    {Finished}  v
                                <--------  [Application Data*]
      ^ {Certificate}
-Auth | {Attestation}
-     | {CertificateVerify}
+Auth | {CertificateVerify}
+     | {Attestation}
      v {Finished}              -------->
        [Application Data]      <------->  [Application Data]
 ~~~~
@@ -411,7 +411,7 @@ Auth | {Attestation}
 In this use case the TLS client challenges the TLS server to present Evidence.
 The TLS server acts as an attester while the TLS client is the relying party.
 The server sends the Evidence in an `Attestation` handshake message after the
-`EncryptedExtensions` message. The TLS client, when receiving the Evidence,
+`CertificateVerify` message. The TLS client, when receiving the Evidence,
 will have to contact the Verifier (which is not shown in the diagram).
 
 An example of this flow can be found in confidential computing where
@@ -432,14 +432,15 @@ Exch | + evidence_request
                                                                v
                                         {EncryptedExtensions}  ^  Server
                                           + evidence_request   |  Params
-                                         {Attestation}         |
                                          {CertificateRequest}  v
                                                {Certificate}  ^
-                                         {CertificateVerify}  | Auth
+                                         {CertificateVerify}  |
+                                         {Attestation}         | Auth
                                                    {Finished}  v
                                <--------  [Application Data*]
      ^ {Certificate}
 Auth | {CertificateVerify}
+     | {Attestation}
      v {Finished}              -------->
        [Application Data]      <------->  [Application Data]
 ~~~~
@@ -452,7 +453,7 @@ to the TLS server. The TLS client is the attester and the TLS server acts as
 a relying party. Prior to delivering its Certificate message, the client must
 contact the Verifier (not shown in the diagram) to receive the Attestation
 Results that it will use as credentials. The client sends the Attestation
-Results in an `Attestation` handshake message after the `Certificate` message.
+Results in an `Attestation` handshake message after the `CertificateVerify` message.
 
 ~~~~
        Client                                           Server
@@ -469,13 +470,13 @@ Exch | + results_proposal
                                            + results_proposal  |  Params
                                          {CertificateRequest}  v
                                                {Certificate}  ^
-                                         {Attestation}         |
-                                         {CertificateVerify}  | Auth
+                                         {CertificateVerify}   |
+                                         {Attestation}         | Auth
                                                    {Finished}  v
                                <--------  [Application Data*]
      ^ {Certificate}
-Auth | {Attestation}
-     | {CertificateVerify}
+Auth | {CertificateVerify}
+     | {Attestation}
      v {Finished}              -------->
        [Application Data]      <------->  [Application Data]
 ~~~~
@@ -489,7 +490,7 @@ Results from the TLS server. Prior to delivering its Certificate message, the
 server must contact the Verifier (not shown in the diagram) to receive the
 Attestation Results that it will use as credentials. The server sends the
 Attestation Results in an `Attestation` handshake message after the
-`EncryptedExtensions` message.
+`CertificateVerify` message.
 
 ~~~~
        Client                                           Server
@@ -504,14 +505,15 @@ Exch | + results_request
                                                                v
                                         {EncryptedExtensions}  ^  Server
                                            + results_request   |  Params
-                                         {Attestation}         |
                                          {CertificateRequest}  v
                                                {Certificate}  ^
-                                         {CertificateVerify}  | Auth
+                                         {CertificateVerify}   |
+                                         {Attestation}         | Auth
                                                    {Finished}  v
                                <--------  [Application Data*]
      ^ {Certificate}
 Auth | {CertificateVerify}
+     | {Attestation}
      v {Finished}              -------->
        [Application Data]      <------->  [Application Data]
 ~~~~
@@ -755,17 +757,16 @@ Exch | + key_share*
                                          + evidence_proposal*  |
                                           + evidence_request*  |
                                           + results_proposal*  |
-                                           + results_request*  |
-                                         {Attestation*}        |  Params
+                                           + results_request*  |  Params
                                         {CertificateRequest*}  v
                                                {Certificate*}  ^
-                                         {Attestation*}        |
-                                         {CertificateVerify*}  | Auth
+                                         {CertificateVerify*}  |
+                                         {Attestation*}        | Auth
                                                    {Finished}  v
                                <--------  [Application Data*]
      ^ {Certificate*}
-Auth | {Attestation*}
-     | {CertificateVerify*}
+Auth | {CertificateVerify*}
+     | {Attestation*}
      v {Finished}              -------->
        [Application Data]      <------->  [Application Data]
 ~~~~
@@ -831,7 +832,7 @@ server wants to request Evidence from the client, it MUST include the
 evidence_proposal extension in the EncryptedExtensions. This
 evidence_proposal extension in the EncryptedExtensions then indicates
 what Evidence format the client is requested to provide in an
-`Attestation` handshake message sent after the `Certificate` message.
+`Attestation` handshake message sent after the `CertificateVerify` message.
 The Evidence contained in the CMW payload MUST include a secret derived from
 the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with the client's TLS identity public key (TIK-C).
@@ -850,7 +851,7 @@ types of Evidence the client can challenge the server to return
 in an `Attestation` handshake message. With the evidence_request
 extension in the EncryptedExtensions, the server indicates the
 Evidence type carried in the `Attestation` handshake message sent
-after the EncryptedExtensions by the server. The Evidence
+after the CertificateVerify by the server. The Evidence
 contained in the CMW payload MUST include a secret derived from
 the TLS main secret and the message transcript up to ServerHello (see {{crypto-ops}})
 in the TEE's signature, along with
@@ -873,11 +874,11 @@ extensions in the ClientHello message.
 
 The results_proposal extension in the ClientHello message indicates the Verifier
 identities from which the client can relay Attestation Results. The client sends the Attestation Results in an
-`Attestation` handshake message after the `Certificate` message.
+`Attestation` handshake message after the `CertificateVerify` message.
 
 The results_request extension in the ClientHello message indicates the Verifier
 identities from which the client expects the server to provide Attestation
-Results in an `Attestation` handshake message sent after the EncryptedExtensions.
+Results in an `Attestation` handshake message sent after the CertificateVerify.
 
 The results_proposal and results_request extensions sent in the ClientHello each
 carry a list of supported Verifier identities, sorted by preference.  When the
@@ -921,7 +922,7 @@ wants to request Attestation Results from the client, it MUST include the
 results_proposal extension in the EncryptedExtensions. This results_proposal
 extension in the EncryptedExtensions then indicates what Verifier the client is
 requested to provide Attestation Results from in an `Attestation` handshake
-message sent after the `Certificate` message.  The value conveyed in the
+message sent after the `CertificateVerify` message.  The value conveyed in the
 results_proposal extension by the server MUST be selected from one of the
 values provided in the results_proposal extension sent in the ClientHello.
 
@@ -934,7 +935,7 @@ The results_request extension in the ClientHello indicates what Verifiers the
 client trusts as issuers of Attestation Results for the server. With the
 results_request extension in the EncryptedExtensions, the server indicates the
 identity of the Verifier who issued the Attestation Results carried in the
-`Attestation` handshake message sent after the EncryptedExtensions by the
+`Attestation` handshake message sent after the CertificateVerify by the
 server. The Verifier identity in the results_request extension MUST contain a
 single value selected from the results_request extension in the ClientHello.
 
@@ -1039,8 +1040,8 @@ The key changes include:
 
 - Removed certificate extension mechanism for conveying attestation Evidence
 - Introduced new `Attestation` handshake message for carrying CMW (Conceptual Message Wrapper) payload
-- `Attestation` message sent after EncryptedExtensions when server is attester
-- `Attestation` message sent after Certificate message when client is attester
+- `Attestation` message sent after CertificateVerify when server is attester
+- `Attestation` message sent after CertificateVerify message when client is attester
 - Removed attestation-only mode (implementations SHOULD use self-signed X.509 certificates instead)
 - Removed use cases section
 - Removed KAT (Key Attestation Token) and PAT (Platform Attestation Token) references, using CMW directly
