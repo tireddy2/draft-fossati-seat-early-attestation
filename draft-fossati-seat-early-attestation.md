@@ -1049,3 +1049,41 @@ The key changes include:
 - CertificateVerify remains unchanged from baseline TLS (no proof-of-possession needed)
 - Added session resumption discussion (resumption MUST be rejected if reattestation is required per local policy)
 - Added reattestation discussion using Extended Key Update (EKU) as defined in {{I-D.ietf-tls-extended-key-update}}
+
+<!-- Start of Appendices -->
+
+--- back
+
+# Design Rationale {#design-rationale}
+
+This appendix explains the rationale for introducing a dedicated `Attestation`
+handshake message, instead of embedding attestation in an extension inside 
+the TLS `Certificate` message. That approach fails to meet key security,
+and privacy requirements.
+
+## Requires Certificate Authentication
+
+TLS 1.3 supports authentication modes where no `Certificate` message is sent:
+
+* PSK-based authentication  
+* PAKE-based authentication
+
+A design that relies on a `Certificate` message extension cannot operate in
+these cases. In contrast, a dedicated `Attestation` handshake message works
+regardless of authentication mode, making it compatible with the full TLS
+authentication spectrum.
+
+## Attestation after Authentication
+
+Attestation Evidence may contain sensitive platform information. Embedding such
+information inside the `Certificate` message would expose it before the
+client has authenticated to the server and vice versa. A dedicated `Attestation` 
+message avoids this issue by being sent only after peer authentication has completed.
+
+## Re-attestation Not Fully Supported
+
+TLS allows Post-Handshake client authentication but provides no mechanism for 
+Post-Handshake server authentication. As a result, a design that embeds attestation 
+inside the `Certificate` message would allow only the client and not the server to
+refresh its attestation. This is insufficient for deployments that require periodic 
+server re-attestation.
