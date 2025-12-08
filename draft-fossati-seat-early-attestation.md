@@ -1052,8 +1052,6 @@ The key changes include:
 
 <!-- Start of Appendices -->
 
---- back
-
 # Design Rationale {#design-rationale}
 
 This appendix explains the rationale for introducing a dedicated `Attestation`
@@ -1066,24 +1064,17 @@ and privacy requirements.
 TLS 1.3 supports authentication modes where no `Certificate` message is sent:
 
 * PSK-based authentication  
-* PAKE-based authentication
+* PAKE-based authentication {{!I-D.ietf-tls-rfc8446bis}}  
 
 A design that relies on a `Certificate` message extension cannot operate in
 these cases. In contrast, a dedicated `Attestation` handshake message works
 regardless of authentication mode, making it compatible with the full TLS
 authentication spectrum.
 
-## Attestation after Authentication
-
-Attestation Evidence may contain sensitive platform information. Embedding such
-information inside the `Certificate` message would expose it before the
-client has authenticated to the server and vice versa. A dedicated `Attestation` 
-message avoids this issue by being sent only after peer authentication has completed.
-
 ## Re-attestation Not Fully Supported
 
-TLS allows Post-Handshake client authentication but provides no mechanism for 
-Post-Handshake server authentication. As a result, a design that embeds attestation 
-inside the `Certificate` message would allow only the client and not the server to
-refresh its attestation. This is insufficient for deployments that require periodic 
-server re-attestation.
+TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}  
+but provides no mechanism for Post-Handshake server authentication. As a result, a design 
+that embeds attestation inside the `Certificate` message would allow only the client and 
+not the server to refresh its attestation. This is insufficient for deployments that 
+require periodic server re-attestation.
