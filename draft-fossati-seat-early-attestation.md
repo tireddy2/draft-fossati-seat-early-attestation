@@ -627,23 +627,7 @@ the initial handshake MUST NOT be reused.
 
 Re-attestation can be triggered after:
 
-* completion of a TLS 1.3 KeyUpdate or
 * completion of an Extended Key Update (EKU) exchange {{!I-D.ietf-tls-extended-key-update}}.
-
-When a KeyUpdate is processed, TLS derives a new application traffic secret
-(`application_traffic_secret_N+1`) as described in {{Section 7.2 of -tls13}}.
-To bind re-attestation to this updated TLS session state, the attester
-derives a fresh attestation secret directly from the updated traffic secret:
-
-~~~
-attestation_secret_new =
-          HKDF-Expand-Label(application_traffic_secret_N+1,
-                            "Early Attestation",
-                            TLS_Identity_Public_Key,
-                            Hash.length)
-~~~
-
-This derivation ensures that the new attestation is bound to the updated key schedule.
 
 Extended Key Update injects fresh key-exchange input into the key schedule and produces a
 new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}. To bind
@@ -677,7 +661,7 @@ Including the EKU request and response messages ensures that the resulting attes
 is bound to the specific EKU exchange and therefore reflects fresh key-exchange entropy
 introduced by EKU.
 
-After deriving the fresh attestation_secret whether after KeyUpdate or EKU, the attester:
+After deriving the fresh attestation_secret whether after EKU, the attester:
 
 1. generates fresh Evidence using the new attestation_secret and
 2. sends a new `Attestation` handshake message containing the updated CMW payload.
