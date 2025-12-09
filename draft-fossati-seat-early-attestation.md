@@ -56,6 +56,12 @@ author:
        organization: Linaro
        email: thomas.fossati@linaro.org
 
+ -
+       ins: T. Reddy
+       name: Tirumaleswar Reddy
+       organization: Nokia
+       email: k.tirumaleswar_reddy@nokia.com
+
 normative:
   I-D.ietf-tls-rfc8446bis: tls13
   I-D.ietf-rats-msg-wrap: cmw
@@ -612,21 +618,21 @@ perform reattestation {{reattestation}} periodically, as per local policy.
 ## Re-Attestation {#reattestation}
 
 Over time, attestation Evidence or Attestation Results may become stale and
-require refresh. Long-lived TLS connections require updated assurance that 
-the peer continues to operate in a trustworthy state. This document 
-therefore supports re-attestation, in which either peer MAY request fresh 
-Evidence at any time post-handshake. The attester MUST generate evidence 
-using a freshly derived attestation_secret. The attestation_secret used during 
+require refresh. Long-lived TLS connections require updated assurance that
+the peer continues to operate in a trustworthy state. This document
+therefore supports re-attestation, in which either peer MAY request fresh
+Evidence at any time post-handshake. The attester MUST generate evidence
+using a freshly derived attestation_secret. The attestation_secret used during
 the initial handshake MUST NOT be reused.
 
 Re-attestation can be triggered after:
 
-* completion of a TLS 1.3 KeyUpdate or  
+* completion of a TLS 1.3 KeyUpdate or
 * completion of an Extended Key Update (EKU) exchange {{!I-D.ietf-tls-extended-key-update}}.
 
-When a KeyUpdate is processed, TLS derives a new application traffic secret 
-(`application_traffic_secret_N+1`) as described in {{Section 7.2 of -tls13}}. 
-To bind re-attestation to this updated TLS session state, the attester 
+When a KeyUpdate is processed, TLS derives a new application traffic secret
+(`application_traffic_secret_N+1`) as described in {{Section 7.2 of -tls13}}.
+To bind re-attestation to this updated TLS session state, the attester
 derives a fresh attestation secret directly from the updated traffic secret:
 
 ~~~
@@ -639,10 +645,10 @@ attestation_secret_new =
 
 This derivation ensures that the new attestation is bound to the updated key schedule.
 
-Extended Key Update injects fresh key-exchange input into the key schedule and produces a 
-new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}. To bind 
-re-attestation to this EKU exchange, the attester derives a fresh attestation secret from 
-`Main Secret N+1`, using the concatenation of the EKU request and response messages and 
+Extended Key Update injects fresh key-exchange input into the key schedule and produces a
+new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}. To bind
+re-attestation to this EKU exchange, the attester derives a fresh attestation secret from
+`Main Secret N+1`, using the concatenation of the EKU request and response messages and
 its TLS identity public key as context.
 
 For a client attester:
@@ -651,8 +657,8 @@ For a client attester:
 client_attestation_secret =
       Derive-Secret(Main Secret N+1,
                     "Re-attestation",
-                    EKU(request) || 
-                    EKU(response) || 
+                    EKU(request) ||
+                    EKU(response) ||
                     TLS_Client_Public_Key)
 ~~~
 
@@ -662,18 +668,18 @@ For a server attester:
 server_attestation_secret =
       Derive-Secret(Main Secret N+1,
                     "Re-attestation",
-                    EKU(request) || 
-                    EKU(response) || 
+                    EKU(request) ||
+                    EKU(response) ||
                     TLS_Server_Public_Key)
 ~~~
 
-Including the EKU request and response messages ensures that the resulting attestation secret 
-is bound to the specific EKU exchange and therefore reflects fresh key-exchange entropy 
-introduced by EKU. 
+Including the EKU request and response messages ensures that the resulting attestation secret
+is bound to the specific EKU exchange and therefore reflects fresh key-exchange entropy
+introduced by EKU.
 
 After deriving the fresh attestation_secret whether after KeyUpdate or EKU, the attester:
 
-1. generates fresh Evidence using the new attestation_secret and  
+1. generates fresh Evidence using the new attestation_secret and
 2. sends a new `Attestation` handshake message containing the updated CMW payload.
 
 The TLS peer validates that the attestation payload incorporates the newly derived attestation secret.
@@ -1099,7 +1105,7 @@ The key changes include:
 # Design Rationale {#design-rationale}
 
 This appendix explains the rationale for introducing a dedicated `Attestation`
-handshake message, instead of embedding attestation in an extension inside 
+handshake message, instead of embedding attestation in an extension inside
 the TLS `Certificate` message. That approach fails to meet key security,
 and privacy requirements.
 
@@ -1107,8 +1113,8 @@ and privacy requirements.
 
 TLS 1.3 supports authentication modes where no `Certificate` message is sent:
 
-* PSK-based authentication  
-* PAKE-based authentication {{!I-D.ietf-tls-pake}}  
+* PSK-based authentication
+* PAKE-based authentication {{!I-D.ietf-tls-pake}}
 
 A design that relies on a `Certificate` message extension cannot operate in
 these cases. In contrast, a dedicated `Attestation` handshake message works
@@ -1117,8 +1123,8 @@ authentication spectrum.
 
 ## Re-attestation Not Fully Supported
 
-TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}  
-but provides no mechanism for Post-Handshake server authentication. As a result, a design 
-that embeds attestation inside the `Certificate` message would allow only the client and 
-not the server to refresh its attestation. This is insufficient for deployments that 
+TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}
+but provides no mechanism for Post-Handshake server authentication. As a result, a design
+that embeds attestation inside the `Certificate` message would allow only the client and
+not the server to refresh its attestation. This is insufficient for deployments that
 require periodic server re-attestation.
