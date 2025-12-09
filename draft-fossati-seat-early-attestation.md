@@ -1064,7 +1064,7 @@ and privacy requirements.
 TLS 1.3 supports authentication modes where no `Certificate` message is sent:
 
 * PSK-based authentication  
-* PAKE-based authentication {{!I-D.ietf-tls-rfc8446bis}}  
+* PAKE-based authentication {{!I-D.ietf-tls-pake}}  
 
 A design that relies on a `Certificate` message extension cannot operate in
 these cases. In contrast, a dedicated `Attestation` handshake message works
