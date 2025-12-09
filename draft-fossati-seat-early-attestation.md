@@ -1055,7 +1055,7 @@ The key changes include:
 # Design Rationale {#design-rationale}
 
 This appendix explains the rationale for introducing a dedicated `Attestation`
-handshake message, instead of embedding attestation in an extension inside 
+handshake message, instead of embedding attestation in an extension inside
 the TLS `Certificate` message. That approach fails to meet key security,
 and privacy requirements.
 
@@ -1063,8 +1063,8 @@ and privacy requirements.
 
 TLS 1.3 supports authentication modes where no `Certificate` message is sent:
 
-* PSK-based authentication  
-* PAKE-based authentication {{!I-D.ietf-tls-pake}}  
+* PSK-based authentication
+* PAKE-based authentication {{!I-D.ietf-tls-pake}}
 
 A design that relies on a `Certificate` message extension cannot operate in
 these cases. In contrast, a dedicated `Attestation` handshake message works
@@ -1073,8 +1073,8 @@ authentication spectrum.
 
 ## Re-attestation Not Fully Supported
 
-TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}  
-but provides no mechanism for Post-Handshake server authentication. As a result, a design 
-that embeds attestation inside the `Certificate` message would allow only the client and 
-not the server to refresh its attestation. This is insufficient for deployments that 
+TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}
+but provides no mechanism for Post-Handshake server authentication. As a result, a design
+that embeds attestation inside the `Certificate` message would allow only the client and
+not the server to refresh its attestation. This is insufficient for deployments that
 require periodic server re-attestation.
