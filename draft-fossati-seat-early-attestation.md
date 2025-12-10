@@ -615,12 +615,12 @@ verification is needed to ensure the peer's platform and workload remain in a
 trustworthy state. If the client wishes to retain a long-running connection, it SHOULD
 perform reattestation {{reattestation}} periodically, as per local policy.
 
-## Re-Attestation {#reattestation}
+## ReAttestation {#reattestation}
 
 Over time, attestation Evidence or Attestation Results may become stale and
 require refresh. Long-lived TLS connections require updated assurance that
 the peer continues to operate in a trustworthy state. This document
-therefore supports re-attestation, in which either peer MAY request fresh
+therefore supports reattestation, in which either peer MAY request fresh
 Evidence at any time post-handshake. The attester MUST generate evidence
 using a freshly derived attestation_secret. The attestation_secret used during
 the initial handshake MUST NOT be reused.
@@ -629,7 +629,7 @@ Reattestation is always associated with the completion of an Extended Key Update
 {{!I-D.ietf-tls-extended-key-update}}. Extended Key Update injects fresh key-exchange input into
 the key schedule and produces a
 new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}. To bind
-re-attestation to this EKU exchange, the attester derives a fresh attestation secret from
+reattestation to this EKU exchange, the attester derives a fresh attestation secret from
 `Main Secret N+1`, using the concatenation of the EKU request and response messages and
 its TLS identity public key as context.
 
@@ -638,7 +638,7 @@ For a client attester:
 ~~~
 client_attestation_secret =
       Derive-Secret(Main Secret N+1,
-                    "Re-attestation",
+                    "reattestation",
                     EKU(request) ||
                     EKU(response) ||
                     TLS_Client_Public_Key)
@@ -649,7 +649,7 @@ For a server attester:
 ~~~
 server_attestation_secret =
       Derive-Secret(Main Secret N+1,
-                    "Re-attestation",
+                    "reattestation",
                     EKU(request) ||
                     EKU(response) ||
                     TLS_Server_Public_Key)
@@ -1080,7 +1080,7 @@ The key changes include:
 - Nonces (client and server) and attester's TLS identity public key are included in TEE-signed Evidence/AttestationResults within CMW
 - CertificateVerify remains unchanged from baseline TLS (no proof-of-possession needed)
 - Added session resumption discussion (resumption MUST be rejected if reattestation is required per local policy)
-- Added re-attestation
+- Added reattestation
 
 <!-- Start of Appendices -->
 
@@ -1103,10 +1103,10 @@ these cases. In contrast, a dedicated `Attestation` handshake message works
 regardless of authentication mode, making it compatible with the full TLS
 authentication spectrum.
 
-## Re-attestation Not Fully Supported
+## reattestation Not Fully Supported
 
 TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}
 but provides no mechanism for Post-Handshake server authentication. As a result, a design
 that embeds attestation inside the `Certificate` message would allow only the client and
 not the server to refresh its attestation. This is insufficient for deployments that
-require periodic server re-attestation.
+require periodic server reattestation.
