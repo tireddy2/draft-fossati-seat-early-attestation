@@ -625,11 +625,9 @@ Evidence at any time post-handshake. The attester MUST generate evidence
 using a freshly derived attestation_secret. The attestation_secret used during
 the initial handshake MUST NOT be reused.
 
-Re-attestation can be triggered after:
-
-* completion of an Extended Key Update (EKU) exchange {{!I-D.ietf-tls-extended-key-update}}.
-
-Extended Key Update injects fresh key-exchange input into the key schedule and produces a
+Reattestation is always associated with the completion of an Extended Key Update (EKU) exchange
+{{!I-D.ietf-tls-extended-key-update}}. Extended Key Update injects fresh key-exchange input into
+the key schedule and produces a
 new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}. To bind
 re-attestation to this EKU exchange, the attester derives a fresh attestation secret from
 `Main Secret N+1`, using the concatenation of the EKU request and response messages and
