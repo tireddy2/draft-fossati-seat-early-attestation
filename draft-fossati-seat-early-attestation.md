@@ -1103,7 +1103,7 @@ these cases. In contrast, a dedicated `Attestation` handshake message works
 regardless of authentication mode, making it compatible with the full TLS
 authentication spectrum.
 
-## reattestation Not Fully Supported
+## Reattestation Not Fully Supported
 
 TLS allows Post-Handshake client authentication {{Section 4.2.6 of I-D.ietf-tls-rfc8446bis}}
 but provides no mechanism for Post-Handshake server authentication. As a result, a design
