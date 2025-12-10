@@ -615,7 +615,7 @@ verification is needed to ensure the peer's platform and workload remain in a
 trustworthy state. If the client wishes to retain a long-running connection, it SHOULD
 perform reattestation {{reattestation}} periodically, as per local policy.
 
-## ReAttestation {#reattestation}
+## Reattestation {#reattestation}
 
 Over time, attestation Evidence or Attestation Results may become stale and
 require refresh. Long-lived TLS connections require updated assurance that
