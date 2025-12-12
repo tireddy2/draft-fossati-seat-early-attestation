@@ -590,6 +590,12 @@ ensure that the software layer above it is endorsed.
 * The TEE itself, when possible, SHOULD generate the nonce by running HKDF with an allowlisted label and if it holds the TIK, SHOULD
 validate the pubic key.
 
+# DTLS Considerations
+
+The Attestation message MUST be handled using the same DTLS handshake mechanisms for fragmentation, ordering, and retransmission to ensure reliable delivery. To avoid unnecessary retransmissions and prevent the attestor from repeatedly transmitting the Attestation message while the receiver is processing it, the receiving peer MUST send an DTLS ACK upon receipt of an Attestation message. This ACK confirms only that the message was received; it does not indicate that attestation appraisal has completed.
+
+Once the Attester receives the acknowledgment, it MUST stop retransmitting the Attestation message. The DTLS peer will complete attestation appraisal asynchronously and apply its authorization policy once appraisal results are available.
+
 # After The Initial Handshake {#after-handshake}
 
 This section covers protocol behavior after the initial handshake, including
