@@ -632,22 +632,26 @@ using a freshly derived attestation_secret.
 
 Reattestation is tied to the completion of an Extended Key Update (EKU) exchange {{!I-D.ietf-tls-extended-key-update}}. TLS peers that require reattestation MUST support EKU,
 since reattestation depends on the key schedule update defined in the EKU draft.
-Extended Key Update injects fresh key-exchange input into the key schedule and
-produces a new main secret (`Main Secret N+1`) {{I-D.ietf-tls-extended-key-update}}.
-To bind reattestation to this EKU exchange, the attester derives a fresh attestation
-secret from `Main Secret N+1`, using the concatenation of the EKU request and
-response messages and its TLS identity public key as context.
+The first two messages of an EKU exchange introduce fresh key-exchange input and
+make `Main Secret N+1` available to both peers.
 
-However, EKU alone does not guarantee that both peers transitioned to the same
-`Main Secret N+1`. Before reattestation can occur, the peers MUST complete
-the authenticated-transition step defined in {{!I-D.ietf-tls-extended-key-update}},
-using either Post-Handshake Client Authentication or Exported Authenticators.
-This ensures that both peers have derived the same `Main Secret N+1` and
-detects any active interference with the EKU exchange.
+However, EKU alone does not guarantee that both peers transition to the same
+`Main Secret N+1`. The peers MUST complete the authenticated-transition step
+defined in {{!I-D.ietf-tls-extended-key-update}}, using either Post-Handshake
+Client Authentication or Exported Authenticators. This ensures that both peers
+have derived the same `Main Secret N+1` and detects any active interference
+with the EKU exchange.
 
-Once EKU and the authenticated transition are complete, the attester derives a
-fresh attestation_secret from `Main Secret N+1` using the concatenation of the
+The Attestation message MUST be sent immediately before the attestor sends
+its EKU(new_key_update) message. Once `Main Secret N+1` is available
+(after the first two EKU messages), the attester derives a new
+attestation_secret from `Main Secret N+1`, using the concatenation of the
 EKU request and response messages and its TLS identity public key as context.
+
+The receiving peer, however, MUST NOT process the Attestation until the
+EKU exchange and the authenticated transition step have completed. This
+ensures that attestation bound to `Main Secret N+1` is accepted only after
+both peers have confirmed that they share the same updated key state.
 
 For a client attester:
 
@@ -675,7 +679,7 @@ Including the EKU request and response messages ensures that the resulting attes
 is bound to the specific EKU exchange and therefore reflects fresh key-exchange entropy
 introduced by EKU.
 
-After deriving the fresh attestation_secret whether after EKU, the attester:
+After deriving the fresh attestation_secret, the attester:
 
 1. generates fresh Evidence using the new attestation_secret and
 2. sends a new `Attestation` handshake message containing the updated CMW payload.
