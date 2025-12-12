@@ -592,7 +592,7 @@ validate the pubic key.
 
 # DTLS Considerations
 
-The Attestation message MUST be handled using the same DTLS handshake mechanisms for fragmentation, ordering, and retransmission to ensure reliable delivery. To avoid unnecessary retransmissions and prevent the attestor from repeatedly transmitting the Attestation message while the receiver is processing it, the receiving peer MUST send an DTLS ACK upon receipt of an Attestation message. This ACK confirms only that the message was received; it does not indicate that attestation appraisal has completed.
+The Attestation message MUST be handled using the existing DTLS handshake mechanisms for fragmentation, ordering, and retransmission to ensure reliable delivery.
 
 Once the Attester receives the acknowledgment, it MUST stop retransmitting the Attestation message. The DTLS peer will complete attestation appraisal asynchronously and apply its authorization policy once appraisal results are available.
 
