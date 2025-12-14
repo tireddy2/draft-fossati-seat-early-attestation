@@ -592,7 +592,7 @@ validate the pubic key.
 
 # DTLS Considerations
 
-The Attestation message MUST be handled using the existing DTLS handshake mechanisms for fragmentation, ordering, and retransmission to ensure reliable delivery.
+The Attestation message MUST be handled using the same DTLS handshake mechanisms for fragmentation, ordering, and retransmission to ensure reliable delivery. To avoid unnecessary retransmissions and prevent the attestor from repeatedly transmitting the Attestation message while the receiver is processing it, the receiving peer MUST send an DTLS ACK upon receipt of an Attestation message. This ACK confirms only that the message was received; it does not indicate that attestation appraisal has completed.
 
 Once the Attester receives the acknowledgment, it MUST stop retransmitting the Attestation message. The DTLS peer will complete attestation appraisal asynchronously and apply its authorization policy once appraisal results are available.
 
@@ -634,13 +634,6 @@ Reattestation is tied to the completion of an Extended Key Update (EKU) exchange
 since reattestation depends on the key schedule update defined in the EKU draft.
 The first two messages of an EKU exchange introduce fresh key-exchange input and
 make `Main Secret N+1` available to both peers.
-
-However, EKU alone does not guarantee that both peers transition to the same
-`Main Secret N+1`. The peers MUST complete the authenticated-transition step
-defined in {{!I-D.ietf-tls-extended-key-update}}, using either Post-Handshake
-Client Authentication or Exported Authenticators. This ensures that both peers
-have derived the same `Main Secret N+1` and detects any active interference
-with the EKU exchange.
 
 The Attestation message MUST be sent immediately before the attestor sends
 its EKU(new_key_update) message. Once `Main Secret N+1` is available
@@ -1012,6 +1005,16 @@ These properties may be explicitly promised ("attested") by the platform, or the
 <cref> TODO: Discuss freshness guarantees provided by secret derivation from
 the TLS main secret and message transcript. Differences between Background Check and Passport mode.
 </cref>
+
+## Security of Reattestation After EKU
+
+Reattestation relies on the assumption that both peers have derived the same
+`Main Secret N+1` during the preceding EKU exchange. EKU by itself does not
+guarantee that the peers transitioned to a consistent key state in the presence
+of an active attacker. Deployments that require stronger guarantees will have use an
+authenticated transition mechanism discussed in {{!I-D.ietf-tls-extended-key-update}}
+(e.g., post-handshake client authentication or Exported Authenticators) to
+detect key-schedule divergence before relying on reattestation results.
 
 # Privacy Considerations {#priv-cons}
 
